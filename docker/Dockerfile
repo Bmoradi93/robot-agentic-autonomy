@@ -17,10 +17,14 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     nano \
     vim \
+    tmux \
+    git \
     # ROS packages
     ros-humble-irobot-create-msgs \
     ros-humble-irobot-create-nodes \
     ros-humble-rmw-cyclonedds-cpp \
+    ros-humble-diagnostic* \
+    ros-humble-laser-proc \
     ros-humble-foxglove-bridge && \
     rm -rf /var/lib/apt/lists/*
 

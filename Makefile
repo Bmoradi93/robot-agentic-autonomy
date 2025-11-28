@@ -7,6 +7,20 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  help                        Show this help message"
+	@echo "  build                       Build Docker image"
+	@echo "  build-no-cache              Build Docker image without cache"
+	@echo "  start                       Start Docker container"
+	@echo "  enter                       Enter Docker container (interactive)"
+	@echo "  stop                        Stop and remove Docker container"
+	@echo "  restart                     Restart Docker container"
+	@echo "  status                      Show container and image status"
+	@echo "  logs                        Show container logs"
+	@echo "  clean                       Remove unused Docker images"
+	@echo "  clean-all                   Remove all containers and images"
+	@echo "  reset                       Stop, clean, and restart container"
+	@echo "  discovery-server            Start Fast DDS Discovery Server"
+	@echo "  ping-robot                  Ping robot via ubuntu.local"
+	@echo "  ping-robot-lan              Ping robot via LAN IP"
 
 # Docker Management
 build:
@@ -16,7 +30,7 @@ build-no-cache:
 	docker build --no-cache -t turtlebot4-dev docker
 
 start:
-	docker run -d --name turtlebot4-container -it --net=host --privileged -v /dev:/dev -v /tmp/.X-unix:/tmp/.X-unix:rw -e DISPLAY=$(DISPLAY) turtlebot4-dev
+	docker run -d --name turtlebot4-container -it --net=host --privileged -v /dev:/dev -v /tmp/.X-unix:/tmp/.X-unix:rw -v $(CURDIR):/workspace/robot-agentic-autonomy -e DISPLAY=$(DISPLAY) turtlebot4-dev
 
 enter:
 	@echo "Select connection method:"
@@ -60,7 +74,7 @@ clean:
 	docker image prune -f
 
 clean-all:
-	docker rm -f $(docker ps -a -q)
+	docker rm -f $(shell docker ps -a -q) 2>/dev/null || true
 	docker image prune -a -f
 
 reset: stop clean start

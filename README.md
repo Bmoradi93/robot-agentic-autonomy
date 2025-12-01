@@ -100,3 +100,39 @@ This method creates a direct, private network between your laptop and the robot.
 -   `make discovery-server`: Run the ROS 2 Discovery Server on your laptop.
 -   `make ping-robot-lan`: Ping the robot on its static LAN IP.
 -   `make clean-all`: Stop and remove all Docker containers and images on your system.
+
+## Troubleshooting
+
+### GPIOD Library Linking Error
+
+If you encounter an error like:
+```
+/usr/bin/ld: cannot find -lgpiod_library-NOTFOUND: No such file or directory
+```
+
+This is a CMake configuration issue in the `turtlebot4_base` package. The fix is to update `ros2_ws/src/turtlebot4_robot/turtlebot4_base/CMakeLists.txt`:
+
+**Replace:**
+```cmake
+find_library(gpiod_library NAMES libgpiod.so)
+```
+
+**With:**
+```cmake
+# Find gpiod library using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GPIOD REQUIRED libgpiod)
+```
+
+**And replace:**
+```cmake
+target_link_libraries(${PROJECT_NAME}_lib ${gpiod_library})
+```
+
+**With:**
+```cmake
+target_link_libraries(${PROJECT_NAME}_lib ${GPIOD_LIBRARIES})
+target_include_directories(${PROJECT_NAME}_lib PRIVATE ${GPIOD_INCLUDE_DIRS})
+```
+
+This uses `pkg-config` to properly locate the gpiod library, which is the standard way to find system libraries with pkg-config support.

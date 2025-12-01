@@ -21,14 +21,30 @@ RUN apt-get update && apt-get install -y \
     udev \
     usbutils \
     software-properties-common \
+    lsb-release \
+    pkg-config \
+    libgpiod-dev \
+    libgpiod2 \
     # ROS packages
     ros-humble-irobot-create-msgs \
     ros-humble-irobot-create-nodes \
+    ros-humble-irobot-create-description \
     ros-humble-rmw-cyclonedds-cpp \
     ros-humble-diagnostic-updater \
     ros-humble-diagnostic-msgs \
     ros-humble-laser-proc \
-    ros-humble-foxglove-bridge && \
+    ros-humble-foxglove-bridge \
+    ros-humble-depthai-ros \
+    ros-humble-depthai-ros-msgs \
+    ros-humble-rplidar-ros \
+    ros-humble-joy-linux \
+    ros-humble-teleop-twist-joy && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install ROS-Ignition/Gazebo interfaces (separate step for better error handling)
+RUN apt-get update && apt-get install -y \
+    ros-humble-ros-ign-interfaces \
+    ros-humble-ros-gz-interfaces && \
     rm -rf /var/lib/apt/lists/*
 
 # 2. Setup Intel RealSense Repo & Install Pinned Version (L515 Support)
@@ -48,6 +64,13 @@ RUN mkdir -p /etc/apt/keyrings && \
 
 # Install RealSense udev rules
 RUN wget https://raw.githubusercontent.com/IntelRealSense/librealsense/master/config/99-realsense-libusb.rules -O /etc/udev/rules.d/99-realsense-libusb.rules
+
+# Install Ignition Fortress
+RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' && \
+    wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - && \
+    apt-get update && \
+    apt-get install -y ignition-fortress && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
 ENV USERNAME=ros

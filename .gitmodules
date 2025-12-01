@@ -4,3 +4,19 @@
 [submodule "ros2_ws/src/realsense-ros"]
 	path = ros2_ws/src/realsense-ros
 	url = https://github.com/Bmoradi93/realsense-l515-ros-humble.git
+[submodule "ros2_ws/src/turtlebot4"]
+	path = ros2_ws/src/turtlebot4
+	url = https://github.com/turtlebot/turtlebot4.git
+	branch = humble
+[submodule "ros2_ws/src/turtlebot4_robot"]
+	path = ros2_ws/src/turtlebot4_robot
+	url = https://github.com/turtlebot/turtlebot4_robot.git
+	branch = humble
+[submodule "ros2_ws/src/turtlebot4_simulator"]
+	path = ros2_ws/src/turtlebot4_simulator
+	url = https://github.com/turtlebot/turtlebot4_simulator.git
+	branch = humble
+[submodule "ros2_ws/src/turtlebot4_desktop"]
+	path = ros2_ws/src/turtlebot4_desktop
+	url = https://github.com/turtlebot/turtlebot4_desktop.git
+	branch = humble

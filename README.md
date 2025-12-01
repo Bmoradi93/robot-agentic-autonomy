@@ -2,6 +2,10 @@
 
 This repository provides a Docker-based development environment for agentic autonomy absed on the TurtleBot4. This setup builds a comprehensive ROS 2 Humble environment from the official `osrf/ros:humble-desktop` base image and includes all necessary packages to communicate with the TurtleBot4, including the `CycloneDDS` middleware required for recent firmware versions.
 
+## Cloning the repo
+git submodule update --init --recursive
+
+
 ## Prerequisites
 
 -   [Docker](https://docs.docker.com/get-docker/) must be installed on your system.

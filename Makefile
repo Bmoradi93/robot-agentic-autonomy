@@ -21,6 +21,7 @@ help:
 	@echo "  discovery-server            Start Fast DDS Discovery Server"
 	@echo "  ping-robot                  Ping robot via ubuntu.local"
 	@echo "  ping-robot-lan              Ping robot via LAN IP"
+	@echo "  check-usb                   Check USB devices in container"
 
 # Docker Management
 build:
@@ -30,7 +31,7 @@ build-no-cache:
 	docker build --no-cache -t turtlebot4-dev docker
 
 start:
-	docker run -d --name turtlebot4-container -it --net=host --privileged -v /dev:/dev -v /tmp/.X-unix:/tmp/.X-unix:rw -v $(CURDIR):/workspace/robot-agentic-autonomy -e DISPLAY=$(DISPLAY) turtlebot4-dev
+	docker run -d --name turtlebot4-container -it --net=host --privileged -v /dev:/dev -v /tmp/.X-unix:/tmp/.X-unix:rw -v $(CURDIR):/workspace/robot-agentic-autonomy -e DISPLAY=$(DISPLAY) --device-cgroup-rule='c 81:* rmw' --device-cgroup-rule='c 189:* rmw' turtlebot4-dev
 
 enter:
 	@echo "Select connection method:"
@@ -42,11 +43,11 @@ enter:
 			echo "Entering with Wi-Fi (Discovery Server) configuration..."; \
 			read -p "Enter this computer's local Wi-Fi IP address: " HOST_IP; \
 			if [ -z "$$HOST_IP" ]; then echo "IP address cannot be empty."; exit 1; fi; \
-			docker exec -it turtlebot4-container bash -c "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=$$HOST_IP:11811 && bash"; \
+			docker exec -it turtlebot4-container bash -c "cd /workspace/robot-agentic-autonomy && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=$$HOST_IP:11811 && bash"; \
 			;; \
 		2) \
 			echo "Entering with Direct LAN / USB-C configuration..."; \
-			docker exec -it turtlebot4-container bash -c "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=192.168.186.2:11811 && bash"; \
+			docker exec -it turtlebot4-container bash -c "cd /workspace/robot-agentic-autonomy && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=192.168.186.2:11811 && bash"; \
 			;; \
 		*) \
 			echo "Invalid choice."; \
@@ -91,3 +92,14 @@ ping-robot:
 
 ping-robot-lan:
 	ping -c 4 192.168.186.2
+
+# USB Device Diagnostics
+check-usb:
+	@echo "Checking USB devices in container..."
+	@docker exec turtlebot4-container lsusb || echo "Container not running. Start it first with 'make start'"
+	@echo ""
+	@echo "Checking for RealSense devices..."
+	@docker exec turtlebot4-container lsusb | grep -i intel || echo "No Intel RealSense devices found"
+	@echo ""
+	@echo "Checking device permissions..."
+	@docker exec turtlebot4-container ls -la /dev/bus/usb/ 2>/dev/null | head -5 || echo "Cannot access /dev/bus/usb/"

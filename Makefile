@@ -1,0 +1,105 @@
+.DEFAULT_GOAL := help
+
+help:
+	@echo "Makefile for TurtleBot4 Development"
+	@echo ""
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  help                        Show this help message"
+	@echo "  build                       Build Docker image"
+	@echo "  build-no-cache              Build Docker image without cache"
+	@echo "  start                       Start Docker container"
+	@echo "  enter                       Enter Docker container (interactive)"
+	@echo "  stop                        Stop and remove Docker container"
+	@echo "  restart                     Restart Docker container"
+	@echo "  status                      Show container and image status"
+	@echo "  logs                        Show container logs"
+	@echo "  clean                       Remove unused Docker images"
+	@echo "  clean-all                   Remove all containers and images"
+	@echo "  reset                       Stop, clean, and restart container"
+	@echo "  discovery-server            Start Fast DDS Discovery Server"
+	@echo "  ping-robot                  Ping robot via ubuntu.local"
+	@echo "  ping-robot-lan              Ping robot via LAN IP"
+	@echo "  check-usb                   Check USB devices in container"
+
+# Docker Management
+build:
+	docker build -t turtlebot4-dev docker
+
+build-no-cache:
+	docker build --no-cache -t turtlebot4-dev docker
+
+start:
+	docker run -d --name turtlebot4-container -it --net=host --privileged -v /dev:/dev -v /tmp/.X-unix:/tmp/.X-unix:rw -v $(CURDIR):/workspace/robot-agentic-autonomy -e DISPLAY=$(DISPLAY) --device-cgroup-rule='c 81:* rmw' --device-cgroup-rule='c 189:* rmw' turtlebot4-dev
+
+enter:
+	@echo "Select connection method:"
+	@echo "  1. Wi-Fi (Discovery Server)"
+	@echo "  2. Direct LAN / USB-C"
+	@read -p "Enter your choice [1-2]: " choice; \
+	case $$choice in \
+		1) \
+			echo "Entering with Wi-Fi (Discovery Server) configuration..."; \
+			read -p "Enter this computer's local Wi-Fi IP address: " HOST_IP; \
+			if [ -z "$$HOST_IP" ]; then echo "IP address cannot be empty."; exit 1; fi; \
+			docker exec -it turtlebot4-container bash -c "cd /workspace/robot-agentic-autonomy && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=$$HOST_IP:11811 && bash"; \
+			;; \
+		2) \
+			echo "Entering with Direct LAN / USB-C configuration..."; \
+			docker exec -it turtlebot4-container bash -c "cd /workspace/robot-agentic-autonomy && export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp && export ROS_DISCOVERY_SERVER=192.168.186.2:11811 && bash"; \
+			;; \
+		*) \
+			echo "Invalid choice."; \
+			exit 1; \
+			;; \
+	esac
+
+stop:
+	docker stop turtlebot4-container && docker rm -f turtlebot4-container
+
+restart:
+	docker restart turtlebot4-container
+
+status:
+	docker ps -a --filter "name=turtlebot4-container"
+	@echo ""
+	@echo "Image status:"
+	docker images turtlebot4-dev
+
+logs:
+	docker logs turtlebot4-container
+
+# Cleanup
+clean:
+	docker image prune -f
+
+clean-all:
+	docker rm -f $(shell docker ps -a -q) 2>/dev/null || true
+	docker image prune -a -f
+
+reset: stop clean start
+
+# ROS 2 Discovery Server (for Wi-Fi connections)
+discovery-server:
+	@echo "Starting Fast DDS Discovery Server..."
+	@echo "Your local IP address is: $(shell hostname -I | awk '{print $$1}')"
+	fastdds discovery -i 0 -l $(shell hostname -I | awk '{print $$1}') -p 11811
+
+# Robot Discovery
+ping-robot:
+	ping -c 4 ubuntu.local
+
+ping-robot-lan:
+	ping -c 4 192.168.186.2
+
+# USB Device Diagnostics
+check-usb:
+	@echo "Checking USB devices in container..."
+	@docker exec turtlebot4-container lsusb || echo "Container not running. Start it first with 'make start'"
+	@echo ""
+	@echo "Checking for RealSense devices..."
+	@docker exec turtlebot4-container lsusb | grep -i intel || echo "No Intel RealSense devices found"
+	@echo ""
+	@echo "Checking device permissions..."
+	@docker exec turtlebot4-container ls -la /dev/bus/usb/ 2>/dev/null | head -5 || echo "Cannot access /dev/bus/usb/"

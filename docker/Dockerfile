@@ -50,9 +50,12 @@ RUN apt-get update && apt-get install -y \
 # 2. Setup Intel RealSense Repo & Install Pinned Version (L515 Support)
 # We accept the key, add the repo, and install specific version 2.54.2
 # REMOVED: librealsense2-dkms (Cannot install kernel modules in Docker)
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | tee /etc/apt/keyrings/librealsense.pgp > /dev/null && \
-    echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/librealsense.list && \
+RUN apt-get update && apt-get install -y gnupg2 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-key FB0B24895113F120 || \
+    apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key FB0B24895113F120 && \
+    echo "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/librealsense.list && \
     apt-get update && \
     apt-get install -y \
     librealsense2=2.54.2-0~realsense.10773 \
